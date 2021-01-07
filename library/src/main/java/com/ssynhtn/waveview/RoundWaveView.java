@@ -24,8 +24,8 @@ import static android.content.ContentValues.TAG;
 
 /**
  * Created by huangtongnao on 2017/10/25.
+ * @author ssynh
  */
-
 public class RoundWaveView extends View {
 
     private static final float LINE_SMOOTHNESS = 0.16f;

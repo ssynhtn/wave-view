@@ -18,6 +18,8 @@ allprojects {
         jcenter()
         google()
     }
+
+    apply from: "$rootProject.projectDir/checkstyle.gradle"
 }
 
 task clean(type: Delete) {

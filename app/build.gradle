@@ -19,6 +19,19 @@ android {
     }
 }
 
+//task checkstyle(type: Checkstyle) {
+//    group = "verification"
+//    // Where my checkstyle config is...
+//    configFile file("${project.projectDir}/config/checkstyle/checkstyle.xml")
+//    // Where is my suppressions file for checkstyle is...
+//    configProperties.checkstyleSuppressionsPath = file("${project.projectDir}/config/checkstyle/suppressions.xml").absolutePath
+//    source 'src'
+//    include '**/*.java'
+//    exclude '**/gen/**'
+//    exclude "**/test/**"
+//    classpath = files()
+//}
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(":library")
