@@ -16,7 +16,9 @@
     <FrameLayout
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:layout_marginLeft="20dp">
+        android:layout_marginStart="20dp"
+        android:layout_marginLeft="20dp"
+        >
 
         <com.ssynhtn.waveview.RoundWaveView
             android:layout_width="match_parent"
