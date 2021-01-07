@@ -15,6 +15,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 
+import com.ssynhtn.library.R;
+
 import java.util.ArrayList;
 import java.util.List;
 

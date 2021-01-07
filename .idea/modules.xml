@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/wave-view.iml" filepath="$PROJECT_DIR$/.idea/modules/wave-view.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/wave-view.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/wave-view.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/library/wave-view.library.iml" filepath="$PROJECT_DIR$/.idea/modules/library/wave-view.library.iml" />
     </modules>
   </component>
 </project>
