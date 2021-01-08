@@ -6,7 +6,7 @@
 # Usage
 Well, I personal recommend that you clone the project and import the library module so that you can freely modify it as you wish
 
-However if you could use the gradle dependency as well
+However you could use the gradle dependency as well
 
 In your root build.gradle, add these
 
