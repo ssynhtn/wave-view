@@ -1,16 +1,16 @@
 plugins {
     id 'com.android.library'
 //    id 'com.novoda.bintray-release'
-    id 'com.github.panpf.bintray-publish'
+//    id 'com.github.panpf.bintray-publish'
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    compileSdk 34
+    namespace "com.ssynhtn.library"
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 30
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
 
@@ -39,14 +39,14 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
 
-publish {
-    userOrg = 'ssynhtn-org' //bintray账户下某个组织id
-    repoName = 'android-wave-view'  //远程仓库名
-    groupId = 'com.ssynhtn'  //maven仓库下库的包名，一般为模块包名
-    artifactId = 'wave-view' //项目名称
-    publishVersion = '1.0' //版本号
-    desc = 'android wave animation'  //项目介绍，可以不写
-    website = 'https://github.com/ssynhtn/wave-view'  //项目主页，可以不写
-//    licences = ['Apache-2.0']
-}
+//publish {
+//    userOrg = 'ssynhtn-org' //bintray账户下某个组织id
+//    repoName = 'android-wave-view'  //远程仓库名
+//    groupId = 'com.ssynhtn'  //maven仓库下库的包名，一般为模块包名
+//    artifactId = 'wave-view' //项目名称
+//    publishVersion = '1.0' //版本号
+//    desc = 'android wave animation'  //项目介绍，可以不写
+//    website = 'https://github.com/ssynhtn/wave-view'  //项目主页，可以不写
+////    licences = ['Apache-2.0']
+//}
 
