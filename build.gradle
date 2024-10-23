@@ -1,12 +1,16 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
+    ext {
+        kotlin_version = '2.0.21'
+    }
     repositories {
         mavenCentral()
         google()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.7.1'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 //        classpath 'com.novoda:bintray-release:0.9.2'
 //        classpath 'com.github.panpf.bintray-publish:bintray-publish:1.0.0'
 
@@ -24,8 +28,4 @@ allprojects {
 
     apply from: "$rootProject.projectDir/checkstyle.gradle"
 
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
 }
