@@ -1,36 +1,30 @@
-package com.ssynhtn.waveview;
+package com.ssynhtn.waveview
 
-import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 
-public class MainActivity extends AppCompatActivity {
+class MainActivity : AppCompatActivity() {
+    private lateinit var waveView: WaveView
 
-    private static final String TAG = MainActivity.class.getSimpleName();
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-    private WaveView waveView;
+        waveView = findViewById(R.id.wave_three)
+        waveView.addDefaultWaves(2, 1)
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        waveView = findViewById(R.id.wave_three);
-        waveView.addDefaultWaves(2, 1);
-
-        waveView.startAnimation();
+        waveView.startAnimation()
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    override fun onResume() {
+        super.onResume()
 
-        waveView.resumeAnimation();
+        waveView.resumeAnimation()
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
+    override fun onPause() {
+        super.onPause()
 
-        waveView.pauseAnimation();
+        waveView.pauseAnimation()
     }
 }
