@@ -1,256 +1,248 @@
-package com.ssynhtn.waveview;
+package com.ssynhtn.waveview
 
-import android.animation.ValueAnimator;
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.LinearGradient;
-import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.Shader;
-import androidx.annotation.Nullable;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.View;
-import android.view.animation.LinearInterpolator;
-
-import com.ssynhtn.library.R;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static android.content.ContentValues.TAG;
+import android.animation.ValueAnimator
+import android.content.ContentValues
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Shader
+import android.util.AttributeSet
+import android.util.Log
+import android.view.View
+import android.view.animation.LinearInterpolator
+import com.ssynhtn.library.R
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.sin
 
 /**
  * Created by huangtongnao on 2017/10/25.
  * @author ssynh
  */
-public class RoundWaveView extends View {
+class RoundWaveView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
+    View(context, attrs) {
+    private val path: Path
+    private val paint: Paint
 
-    private static final float LINE_SMOOTHNESS = 0.16f;
-    private Path path;
-    private Paint paint;
+    private var pointCount: Int
+    private var innerSizeRatio: Float = 0.75f
+    private var firstRadius: FloatArray
+    private var secondRadius: FloatArray //
+    private var animationOffset: FloatArray //
+    private var xs: FloatArray //
+    private var ys: FloatArray
 
-    int pointCount;
-    float innerSizeRatio = 0.75f;
-    float[] firstRadius;
-    float[] secondRadius;   //
-    float[] animationOffset;    //
-    float[] xs; //
-    float[] ys;
+    private var fractions: FloatArray
 
-    float[] fractions;
+    private var animators: Array<ValueAnimator?>
 
-    ValueAnimator[] animators;
+    private var angleOffset: Float = 0f
 
-    float angleOffset;
+    private var currentCx: Float = 0f
+    private var currentCy: Float = 0f
+    private var translationRadius: Float = 0f
+    private var translationRadiusStep: Float = 0f
 
-    float currentCx;
-    float currentCy;
-    float translationRadius;
-    float translationRadiusStep;
+    private var useAnimation: Boolean
 
-    boolean useAnimation;
+    private var lastTranslationAngle = 0f
+    private fun randomTranslate() {
+        val r = translationRadiusStep
+        val outR = translationRadius
 
-    public RoundWaveView(Context context) {
-        this(context, null);
+        val cx = (width / 2).toFloat()
+        val cy = (height / 2).toFloat()
+        val vx = currentCx - cx
+        val vy = currentCy - cy
+        val ratio = 1 - r / outR
+        val wx = vx * ratio
+        val wy = vy * ratio
+        lastTranslationAngle =
+            ((Math.random() - 0.5) * Math.PI / 4 + lastTranslationAngle).toFloat()
+        val distRatio = Math.random().toFloat()
+
+        currentCx = (cx + wx + r * distRatio * cos(lastTranslationAngle.toDouble())).toFloat()
+        currentCy = (cy + wy + r * distRatio * sin(lastTranslationAngle.toDouble())).toFloat()
     }
 
-    public RoundWaveView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
 
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.RoundWaveView);
-        pointCount = typedArray.getInt(R.styleable.RoundWaveView_pointCount, 6);
-        useAnimation = typedArray.getBoolean(R.styleable.RoundWaveView_useAnimation, true);
-        typedArray.recycle();
-        init(pointCount);
+        val radius = (min(w.toDouble(), h.toDouble()) / 2).toFloat()
+        val innerRadius = radius * innerSizeRatio
+        val ringWidth = radius - innerRadius
 
-        path = new Path();
-        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//        paint.setColor(Color.MAGENTA);
-        paint.setStyle(Paint.Style.FILL);
-
-        float delta = 1.0f / pointCount;
-        for (int i = 0; i < fractions.length; i++) {
-            fractions[i] = delta * i;
+        for (i in 0 until pointCount) {
+            firstRadius[i] = (innerRadius + ringWidth * Math.random()).toFloat()
+            secondRadius[i] = (innerRadius + ringWidth * Math.random()).toFloat()
+            animationOffset[i] = Math.random().toFloat()
         }
 
-        for (int i = 0; i < pointCount; i++) {
-            int pos = (int) (Math.random() * pointCount);
-            float[] dest = new float[pointCount * 2 + 1];
-            int inc = 1;
-            for (int j = 0; j < dest.length; j++) {
-                dest[j] = fractions[pos];
-                pos += inc;
-                if (pos < 0 || pos >= fractions.length) {
-                    inc = -inc;
-                    pos += inc * 2;
+        paint.setShader(
+            LinearGradient(
+                0f,
+                0f,
+                0f,
+                h.toFloat(),
+                Color.RED,
+                Color.BLUE,
+                Shader.TileMode.MIRROR
+            )
+        )
+        paint.alpha = (0.2f * 255).toInt()
+
+        currentCx = (w / 2).toFloat()
+        currentCy = (h / 2).toFloat()
+        translationRadius = radius / 6
+        translationRadiusStep = radius / 4000
+    }
+
+    private var temp: FloatArray = FloatArray(2)
+
+    init {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.RoundWaveView)
+        pointCount = typedArray.getInt(R.styleable.RoundWaveView_pointCount, 6)
+        useAnimation = typedArray.getBoolean(R.styleable.RoundWaveView_useAnimation, true)
+        typedArray.recycle()
+
+        firstRadius = FloatArray(pointCount)
+        secondRadius = FloatArray(pointCount)
+        animationOffset = FloatArray(pointCount)
+        xs = FloatArray(pointCount)
+        ys = FloatArray(pointCount)
+
+        fractions = FloatArray(pointCount + 1)
+
+        animators = arrayOfNulls(pointCount)
+
+        angleOffset = (Math.PI * 2 / pointCount * Math.random()).toFloat()
+
+        path = Path()
+        paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        //        paint.setColor(Color.MAGENTA);
+        paint.style = Paint.Style.FILL
+
+        val delta = 1.0f / pointCount
+        for (i in fractions.indices) {
+            fractions[i] = delta * i
+        }
+
+        for (i in 0 until pointCount) {
+            var pos = (Math.random() * pointCount).toInt()
+            val dest = FloatArray(pointCount * 2 + 1)
+            var inc = 1
+            for (j in dest.indices) {
+                dest[j] = fractions[pos]
+                pos += inc
+                if (pos < 0 || pos >= fractions.size) {
+                    inc = -inc
+                    pos += inc * 2
                 }
             }
 
             if (i == 0) {
-                List<Float> list = new ArrayList<>();
-                for (float f : dest) {
-                    list.add(f);
+                val list: MutableList<Float> = ArrayList()
+                for (f in dest) {
+                    list.add(f)
                 }
-                Log.d(TAG, "DEST " + list);
+                Log.d(ContentValues.TAG, "DEST $list")
             }
 
             if (useAnimation) {
-                ValueAnimator animator = ValueAnimator.ofFloat(dest).setDuration((long) (4000 + Math.random() * 2000));
-                animator.setInterpolator(new LinearInterpolator());
-                animator.setRepeatMode(ValueAnimator.RESTART);
-                animator.setRepeatCount(ValueAnimator.INFINITE);
-                animator.start();
+                val animator =
+                    ValueAnimator.ofFloat(*dest).setDuration((4000 + Math.random() * 2000).toLong())
+                animator.interpolator = LinearInterpolator()
+                animator.repeatMode = ValueAnimator.RESTART
+                animator.repeatCount = ValueAnimator.INFINITE
+                animator.start()
                 if (i == 0) {
-                    animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                        @Override
-                        public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                            randomTranslate();
-                            invalidate();
-                        }
-                    });
+                    animator.addUpdateListener {
+                        randomTranslate()
+                        invalidate()
+                    }
                 }
-                animators[i] = animator;
-                animator.start();
+                animators[i] = animator
+                animator.start()
             }
         }
     }
 
-    private float lastTranslationAngle;
-    private void randomTranslate() {
-        float r = translationRadiusStep;
-        float R = translationRadius;
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
 
-        float cx = getWidth() / 2;
-        float cy = getHeight() / 2;
-        float vx = currentCx - cx;
-        float vy = currentCy - cy;
-        float ratio = 1 - r / R;
-        float wx = vx * ratio;
-        float wy = vy * ratio;
-        lastTranslationAngle = (float) ((Math.random() - 0.5) * Math.PI / 4 + lastTranslationAngle);
-        float distRatio = (float) Math.random();
-
-        currentCx = (float) (cx + wx + r * distRatio * Math.cos(lastTranslationAngle));
-        currentCy = (float) (cy + wy + r * distRatio * Math.sin(lastTranslationAngle));
-
-    }
-
-    private void init(int pointCount) {
-        firstRadius = new float[pointCount];
-        secondRadius = new float[pointCount];
-        animationOffset = new float[pointCount];
-        xs = new float[pointCount];
-        ys = new float[pointCount];
-
-        fractions = new float[pointCount + 1];
-
-        animators = new ValueAnimator[pointCount];
-
-        angleOffset = (float) (Math.PI * 2 / pointCount * Math.random());
-    }
-
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-
-        float radius = Math.min(w, h) / 2;
-        float innerRadius = radius * innerSizeRatio;
-        float ringWidth = radius - innerRadius;
-
-        for (int i = 0; i < pointCount; i++) {
-            firstRadius[i] = (float) (innerRadius + ringWidth * Math.random());
-            secondRadius[i] = (float) (innerRadius + ringWidth * Math.random());
-            animationOffset[i] = (float) Math.random();
-        }
-
-        paint.setShader(new LinearGradient(0, 0, 0, h, Color.RED, Color.BLUE, Shader.TileMode.MIRROR));
-        paint.setAlpha((int) (0.2f * 255));
-
-        currentCx = w / 2;
-        currentCy = h / 2;
-        translationRadius = radius / 6;
-        translationRadiusStep = radius / 4000;
-    }
-
-    float[] temp = new float[2];
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
-//        paint.setColor(Color.MAGENTA);
+        //        paint.setColor(Color.MAGENTA);
 //        float cx = getWidth() / 2;
 //        float cy = getHeight() / 2;
 //        float fraction = (float) valueAnimator.getAnimatedValue();
-        for (int i = 0; i < pointCount; i++) {
+        for (i in 0 until pointCount) {
 //            float currentFraction = animationOffset[i] + fraction;
 //            if (currentFraction >= 1) {
 //                currentFraction = currentFraction - 1;
 //            }
-            float currentFraction = useAnimation ? (float) animators[i].getAnimatedValue() : 0;
-            float radius = firstRadius[i] * (1 - currentFraction) + secondRadius[i] * currentFraction;
-            float angle = (float) (Math.PI * 2 / pointCount * i) + angleOffset;
-            xs[i] = (float) (currentCx + radius * Math.cos(angle));
-            ys[i] = (float) (currentCy + radius * Math.sin(angle));
+            val currentFraction = if (useAnimation) animators[i]?.animatedValue as? Float ?: 0f else 0f
+            val radius = firstRadius[i] * (1 - currentFraction) + secondRadius[i] * currentFraction
+            val angle = (Math.PI * 2 / pointCount * i).toFloat() + angleOffset
+            xs[i] = (currentCx + radius * cos(angle.toDouble())).toFloat()
+            ys[i] = (currentCy + radius * sin(angle.toDouble())).toFloat()
         }
 
-        path.reset();
-        path.moveTo(xs[0], ys[0]);
-        for (int i = 0; i < pointCount; i++) {
-            float currX = getFromArray(xs, i);
-            float currY = getFromArray(ys, i);
-            float nextX = getFromArray(xs, i + 1);
-            float nextY = getFromArray(ys, i + 1);
+        path.reset()
+        path.moveTo(xs[0], ys[0])
+        for (i in 0 until pointCount) {
+            val currX = getFromArray(xs, i)
+            val currY = getFromArray(ys, i)
+            val nextX = getFromArray(xs, i + 1)
+            val nextY = getFromArray(ys, i + 1)
 
-            getVector(xs, ys, i, temp);
+            getVector(xs, ys, i, temp)
 
-            float vx = temp[0];
-            float vy = temp[1];
+            val vx = temp[0]
+            val vy = temp[1]
 
-            getVector(xs, ys, i + 1, temp);
-            float vxNext = temp[0];
-            float vyNext = temp[1];
+            getVector(xs, ys, i + 1, temp)
+            val vxNext = temp[0]
+            val vyNext = temp[1]
 
-            path.cubicTo(currX + vx, currY + vy, nextX - vxNext, nextY - vyNext, nextX, nextY);
+            path.cubicTo(currX + vx, currY + vy, nextX - vxNext, nextY - vyNext, nextX, nextY)
         }
 
-        canvas.drawPath(path, paint);
-//        float firstFraction = (float) animators[0].getAnimatedValue();
+        canvas.drawPath(path, paint)
+
+        //        float firstFraction = (float) animators[0].getAnimatedValue();
 //        paint.setColor(Color.BLACK);
 //        float r = 30;
 //        canvas.drawCircle((getWidth() - r * 2) * firstFraction + r, getHeight() / 2, r, paint);
-
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
         if (useAnimation) {
-            for (ValueAnimator animator : animators) {
-                animator.end();
+            for (animator in animators) {
+                animator?.end()
             }
-
         }
     }
 
-    static float getFromArray(float[] arr, int pos) {
-        return arr[(pos + arr.length) % arr.length];
+    companion object {
+        private const val LINE_SMOOTHNESS = 0.16f
+        fun getFromArray(arr: FloatArray, pos: Int): Float {
+            return arr[(pos + arr.size) % arr.size]
+        }
+
+        fun getVector(xs: FloatArray, ys: FloatArray, i: Int, out: FloatArray) {
+            val nextX = getFromArray(xs, i + 1)
+            val nextY = getFromArray(ys, i + 1)
+            val prevX = getFromArray(xs, i - 1)
+            val prevY = getFromArray(ys, i - 1)
+
+            val vx = (nextX - prevX) * LINE_SMOOTHNESS
+            val vy = (nextY - prevY) * LINE_SMOOTHNESS
+
+            out[0] = vx
+            out[1] = vy
+        }
     }
-
-    static void getVector(float[] xs, float[] ys, int i, float[] out) {
-        float nextX = getFromArray(xs, i + 1);
-        float nextY = getFromArray(ys, i + 1);
-        float prevX = getFromArray(xs, i - 1);
-        float prevY = getFromArray(ys, i - 1);
-
-        float vx = (nextX - prevX) * LINE_SMOOTHNESS;
-        float vy = (nextY - prevY) * LINE_SMOOTHNESS;
-
-        out[0] = vx;
-        out[1] = vy;
-
-    }
-
 }
